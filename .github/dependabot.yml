@@ -1,0 +1,28 @@
+---
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      timezone: "America/Los_Angeles"
+      time: "03:00"
+    pull-request-branch-name:
+      separator: "-"
+    labels:
+      - "dependabot"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "bryanculbertson"
+    commit-message:
+      prefix: "[reqs]"
+      prefix-development: "[reqs-dev]"
+    # Ignore libraries are updated in .poetry.lock and .pre-commit-config.yaml
+    ignore:
+      - dependency-name: "black"
+      - dependency-name: "boto3-stubs"
+      - dependency-name: "flake8"
+      - dependency-name: "isort"
+      - dependency-name: "mypy"
+      - dependency-name: "types-*"
+      - dependency-name: "pre-commit"

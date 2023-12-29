@@ -1,0 +1,13 @@
+{
+    "python.defaultInterpreterPath": ".venv/bin/python3",
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true
+    },
+    "files.watcherExclude": {
+        "**/.mypy_cache/**": true,
+        "**/.tox/**": true,
+        "**/.venv/**": true,
+        "**/out/**": true
+    }
+}

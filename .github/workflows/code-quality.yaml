@@ -1,0 +1,83 @@
+---
+name: Code Quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  pre-commit:
+    name: Pre-commit
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: get python version
+      run: |
+        python_version=$(cat .python-version)
+        echo "python_version=${python_version}" >> $GITHUB_ENV
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.python_version }}
+
+    - uses: pre-commit/action@v3.0.0
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+  test:
+    name: Test
+    runs-on: ubuntu-22.04
+    env:
+      HAS_CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: get python version
+        run: |
+          python_version=$(cat .python-version)
+          echo "python_version=${python_version}" >> $GITHUB_ENV
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.python_version }}
+
+      - name: setup poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python -
+          echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+
+      - name: load poetry install from cache
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+      - run: |
+          poetry env use "$(cat .python-version)"
+          poetry install
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+
+      - name: load .tox from cache
+        id: cached-tox-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .tox
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+      - run: poetry run tox -e test-coverage
+
+      - uses: codecov/codecov-action@v3
+        if: ${{ env.HAS_CODECOV_TOKEN }} && hashFiles('./coverage.xml') != ''
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+
+      - name: clean up .tox
+        run: |
+          rm -f .tox/log/*
+          rm -f .tox/test-coverage/log/*
