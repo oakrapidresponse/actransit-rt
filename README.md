@@ -92,6 +92,9 @@ If you know what you are doing, then you can skip using `pyenv` as long as you h
     ```sh
     sudo apt-get update
     sudo apt-get -y install --no-install-recommends \
+        apt-transport-https \
+        ca-certificates \
+        gnupg \
         shellcheck
     ```
 
@@ -157,6 +160,18 @@ If you know what you are doing, then you can skip using `pyenv` as long as you h
 
     ```sh
     source ~/.bashrc
+    ```
+
+1. Install `gcloud-cli` (if you haven't already)
+
+    https://cloud.google.com/sdk/docs/install-sdk#deb
+
+    ```sh
+    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+
+    echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+
+    sudo apt-get update && sudo apt-get install google-cloud-cli
     ```
 
 #### Mac
@@ -238,6 +253,15 @@ If you know what you are doing, then you can skip using `pyenv` as long as you h
     source ~/.zshrc
     ```
 
+1. Install `gcloud-cli` (if you haven't already)
+
+    Download and extract the `tar.gz` package for your Platform from here:
+    https://cloud.google.com/sdk/docs/install-sdk#mac
+
+    ```sh
+    ./google-cloud-sdk/install.sh
+    ```
+
 ### Setup Project Environment
 
 After setting up system environment with `pyenv` and `poetry`, then you can install the project and its depedancies.
@@ -273,6 +297,16 @@ After setting up system environment with `pyenv` and `poetry`, then you can inst
     ```sh
     poetry shell
     actransit-rt --help
+    ```
+
+### Setup Google Cloud
+
+1. Init `gcloud`
+
+    *If you are working with TVRR then choose project `tvrr-409423`*
+
+    ```sh
+      gcloud init
     ```
 
 ### Testing
