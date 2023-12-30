@@ -7,13 +7,16 @@ FROM mcr.microsoft.com/vscode/devcontainers/base:0-${VARIANT}
 # Install development and python dependancies
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
+        apt-transport-https \
         bash \
         build-essential \
+        ca-certificates \
         curl \
         expat \
         fontconfig \
         gcc \
         git \
+        gnupg \
         libbz2-dev \
         libffi-dev \
         liblzma-dev \

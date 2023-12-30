@@ -46,6 +46,9 @@ sudo apt-get -y install --no-install-recommends \
 echo "Installing project dependencies"
 sudo apt-get update
 sudo apt-get -y install --no-install-recommends \
+    apt-transport-https \
+    ca-certificates \
+    gnupg \
     shellcheck
 
 echo "Installing pyenv"
@@ -84,5 +87,10 @@ echo "Installing python dependencies using Poetry into local venv"
 
 echo "Enabling pre-commit hooks"
 "$HOME"/.local/bin/poetry run tox -e install-hooks
+
+echo "Installing gcloud"
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+sudo apt-get update && sudo apt-get install google-cloud-cli
 
 echo "Install done."
