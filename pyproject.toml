@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "template-cli"
+name = "actransit-rt"
 version = "0.1.0"
-description = "Basic template for python project"
+description = "Achive AC Transit Realtime Feeds"
 authors = ["Bryan Culbertson <bryan.culbertson@gmail.com>"]
 
 [tool.poetry.dependencies]
@@ -27,7 +27,7 @@ pytest-xdist = {version = "3.5.0", extras = ["psutil"]}
 pytest-randomly = "3.15.0"
 
 [tool.poetry.scripts]
-template-cli = "template_cli.cli:cli"
+actransit-rt = "actransit_rt.cli:cli"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

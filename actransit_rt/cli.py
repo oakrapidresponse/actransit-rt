@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 """
-Basic CLI Template
+AC Transit Realtime Archiver
 
 Example usage:
-    poetry run template-cli version
+    poetry run actransit-rt version
 
 """
 import click
