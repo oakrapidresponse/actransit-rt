@@ -78,8 +78,8 @@ python3 -m pipx ensurepath
 
 echo "Installing poetry"
 curl -sSL https://install.python-poetry.org | python3 -
-
 export PATH="$HOME/.local/bin:$PATH"
+"$HOME"/.local/bin/poetry self add poetry-plugin-export
 
 echo "Installing python dependencies using Poetry into local venv"
 "$HOME"/.local/bin/poetry env use "$(cat .python-version)"
