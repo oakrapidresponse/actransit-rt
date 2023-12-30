@@ -286,6 +286,12 @@ After setting up system environment with `pyenv` and `poetry`, then you can inst
     poetry install
     ```
 
+    Add poetry plugins used by this project
+
+    ```sh
+    poetry self add poetry-plugin-export poetry-plugin-dotenv
+    ```
+
 1. Test your installation!
 
     ```sh
@@ -303,7 +309,7 @@ After setting up system environment with `pyenv` and `poetry`, then you can inst
 
 1. Init `gcloud`
 
-    *If you are working with TVRR then choose project `tvrr-409423`*
+    *If you are working with TVRR then choose project `tvrr-409423` and compute zone `us-west1-b`:*
 
     ```sh
       gcloud init
