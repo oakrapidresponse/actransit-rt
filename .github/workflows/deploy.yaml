@@ -9,8 +9,9 @@ on:
       - completed
 
 jobs:
-  job_id:
-    # Add "id-token" with the intended permissions.
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-22.04
     permissions:
       contents: 'read'
       id-token: 'write'
