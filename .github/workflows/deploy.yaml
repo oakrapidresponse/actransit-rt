@@ -72,4 +72,6 @@ jobs:
           --runtime=python312 \
           --source=$FUNCTIONS_DIR \
           --entry-point=hello \
+          --concurrency=1 \
           --trigger-http \
+          --no-allow-unauthenticated
