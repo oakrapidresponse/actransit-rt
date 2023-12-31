@@ -69,6 +69,9 @@ repos:
         args:
           - --config-file=mypy.ini
           - --pretty
+        additional_dependencies: [
+          "types-requests==2.31.0.20231231"
+        ]
 
   - repo: https://github.com/python-poetry/poetry
     rev: "1.7.1"
