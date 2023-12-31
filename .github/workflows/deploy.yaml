@@ -75,3 +75,18 @@ jobs:
           --concurrency=1 \
           --trigger-http \
           --no-allow-unauthenticated
+
+    - name: 'Deploy Snapshot'
+      env:
+        ACTRANSIT_API_TOKEN: ${{ secrets.ACTRANSIT_API_TOKEN }}
+      run: |
+        gcloud functions deploy actransit-rt-snapshot-feeds \
+          --gen2 \
+          --region=us-west1 \
+          --runtime=python312 \
+          --source=$FUNCTIONS_DIR \
+          --entry-point=snapshot_feeds \
+          --concurrency=1 \
+          --trigger-http \
+          --no-allow-unauthenticated \
+          --set-env-vars "OUTPUT_DIR=gs://tvrr-transit-snapshots/actransit/gtfs-rt" "ACTRANSIT_API_TOKEN=$ACTRANSIT_API_TOKEN"

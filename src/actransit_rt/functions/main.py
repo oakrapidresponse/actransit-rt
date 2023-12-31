@@ -1,6 +1,10 @@
+import os
+
+import cloudpathlib
 import flask
 import functions_framework
-from cloudevents.http.event import CloudEvent
+
+from . import archive
 
 
 @functions_framework.http
@@ -11,17 +15,29 @@ def hello(request: flask.Request) -> flask.typing.ResponseReturnValue:
     return f"Hello {name}!"
 
 
-@functions_framework.cloud_event
-def ping(cloud_event: CloudEvent) -> None:
-    print(f"Received event with ID: {cloud_event['id']} and data {cloud_event.data}")
-
-
 @functions_framework.http
-def snapshot(request: flask.Request) -> flask.typing.ResponseReturnValue:
+def snapshot_feeds(request: flask.Request) -> flask.typing.ResponseReturnValue:
     data = request.json or {}
-    is_dryrun = data.get("dryrun", "false".lower()) == "true"
+    is_dryrun = str(data.get("dryrun", "false")).lower() == "true"
 
-    if is_dryrun:
-        return "Dry run"
+    api_token = os.environ.get("ACTRANSIT_API_TOKEN")
+    if not api_token:
+        print("Must configure a valid ACTRANSIT_API_TOKEN")
+        return "Bad config"
 
-    return "Real run"
+    output_dir = os.environ.get("OUTPUT_DIR")
+    if not output_dir:
+        print("Must configure a valid OUTPUT_DIR")
+        return "Bad config"
+
+    try:
+        output_path = cloudpathlib.GSPath(output_dir)
+    except cloudpathlib.exceptions.CloudPathException:
+        print("Must configure a valid gs:// OUTPUT_DIR")
+        return "Bad config"
+
+    archive.snapshot_feeds(
+        api_token=api_token, output_dir=output_path, is_dryrun=is_dryrun
+    )
+
+    return "Success"
