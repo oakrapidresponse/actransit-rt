@@ -1,0 +1,74 @@
+---
+name: Deploy
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Code Quality"]
+    types:
+      - completed
+
+jobs:
+  job_id:
+    # Add "id-token" with the intended permissions.
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+    - uses: 'actions/checkout@v4'
+
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v2'
+      with:
+        project_id: 'tvrr-409423'
+        workload_identity_provider: 'projects/1072483117171/locations/global/workloadIdentityPools/github/providers/actransit-rt-repo'
+
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v2'
+      with:
+        version: '>= 390.0.0'
+
+    - name: 'Use gcloud CLI'
+      run: 'gcloud info'
+
+    - name: get python version
+      run: |
+        python_version=$(cat .python-version)
+        echo "python_version=${python_version}" >> $GITHUB_ENV
+        poetry self add poetry-plugin-export
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.python_version }}
+
+    - name: setup poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python -
+        echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+
+    - name: load poetry install from cache
+      id: cached-poetry-dependencies
+      uses: actions/cache@v3
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+    - name: install dependancies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: |
+        poetry env use "$(cat .python-version)"
+        poetry install
+
+    - name: export requirements
+      run: poetry export -f requirements.txt --output src/actransit-rt/functions/requirements.txt
+
+    - name: 'Deploy Hello'
+      run: >
+        gcloud functions deploy actransit-rt-hello
+          --gen2
+          --region=us-west1
+          --runtime=python312
+          --source=src/actransit-rt/functions
+          --entry-point=hello
+          --trigger-http

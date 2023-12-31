@@ -57,10 +57,11 @@ jobs:
           path: .venv
           key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
 
-      - run: |
+      - name: install dependancies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: |
           poetry env use "$(cat .python-version)"
           poetry install
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
 
       - name: load .tox from cache
         id: cached-tox-dependencies
