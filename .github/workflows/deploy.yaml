@@ -59,7 +59,7 @@ jobs:
         poetry install
 
     - name: export requirements
-      run: poetry export -f requirements.txt --output src/actransit-rt/functions/requirements.txt
+      run: poetry export -f requirements.txt --output src/actransit_rt/functions/requirements.txt
 
     - name: 'Deploy Hello'
       run: >
