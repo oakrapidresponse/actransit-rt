@@ -37,7 +37,6 @@ jobs:
       run: |
         python_version=$(cat .python-version)
         echo "python_version=${python_version}" >> $GITHUB_ENV
-        poetry self add poetry-plugin-export
 
     - uses: actions/setup-python@v5
       with:
@@ -47,6 +46,7 @@ jobs:
       run: |
         curl -sSL https://install.python-poetry.org | python -
         echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+        poetry self add poetry-plugin-export
 
     - name: load poetry install from cache
       id: cached-poetry-dependencies
