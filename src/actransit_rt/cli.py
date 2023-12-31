@@ -10,26 +10,24 @@ Example usage:
 import os
 import pathlib
 from collections.abc import Callable
+from typing import TypeAlias
 
 import click
 import cloudpathlib
 import dotenv
 import smart_open
 
-from .functions import gtfs
+from .functions import archive, gtfs
+
+APath: TypeAlias = cloudpathlib.CloudPath | pathlib.Path
 
 
-def _cloud_path(
-    ctx: click.Context, param: click.Parameter, value: str
-) -> cloudpathlib.CloudPath | pathlib.Path | None:
+def _cloud_path(ctx: click.Context, param: click.Parameter, value: str) -> APath | None:
     """Parameter callback for click to transform str into local or cloud path."""
     if not value:
         return None
 
-    if value.startswith("gs://"):
-        return cloudpathlib.GSPath(value)
-    else:
-        return pathlib.Path(value)
+    return cloudpathlib.anypath.to_anypath(value)
 
 
 def _output_option() -> Callable:
@@ -48,6 +46,10 @@ def _api_token_option() -> Callable:
     )
 
 
+def _dry_run_option() -> Callable:
+    return click.option("--dry-run/--no-dry-run", type=bool, default=False)
+
+
 @click.group()
 def cli() -> None:
     """Run cli commands"""
@@ -62,8 +64,30 @@ def version() -> None:
 
 @cli.command()
 @_api_token_option()
+@click.option(
+    "--output-dir",
+    type=str,
+    callback=_cloud_path,
+    required=True,
+)
+@_dry_run_option()
+def snapshot(api_token: str, output_dir: APath, dry_run: bool) -> None:
+    """Snapshot and archive all realtime feeds."""
+    archive.snapshot_feeds(
+        api_token=api_token, output_dir=output_dir, is_dryrun=dry_run
+    )
+
+
+@cli.group("api")
+def api() -> None:
+    """Run realtime commands"""
+    pass
+
+
+@api.command()
+@_api_token_option()
 @_output_option()
-def tripupdates(api_token: str, output: str | None) -> None:
+def tripupdates(api_token: str, output: APath | None) -> None:
     """Return trip updates feed."""
     feed = gtfs.retrieve_tripupdates_feed(token=api_token)
 
@@ -75,10 +99,10 @@ def tripupdates(api_token: str, output: str | None) -> None:
         click.echo(feed)
 
 
-@cli.command()
+@api.command()
 @_api_token_option()
 @_output_option()
-def vehicles(api_token: str, output: str | None) -> None:
+def vehicles(api_token: str, output: APath | None) -> None:
     """Return vehicles feed."""
     feed = gtfs.retrieve_vehicles_feed(token=api_token)
 
@@ -90,10 +114,10 @@ def vehicles(api_token: str, output: str | None) -> None:
         click.echo(feed)
 
 
-@cli.command()
+@api.command()
 @_api_token_option()
 @_output_option()
-def alerts(api_token: str, output: str | None) -> None:
+def alerts(api_token: str, output: APath | None) -> None:
     """Return alerts feed."""
     feed = gtfs.retrieve_alerts_feed(token=api_token)
 
