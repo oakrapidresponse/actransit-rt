@@ -8,6 +8,9 @@ on:
     types:
       - completed
 
+env:
+  FUNCTIONS_DIR: src/actransit_rt/functions
+
 jobs:
   deploy:
     name: Deploy
@@ -22,7 +25,7 @@ jobs:
     - id: 'auth'
       uses: 'google-github-actions/auth@v2'
       with:
-        project_id: 'tvrr-409423'
+        service_account: 'ac-transit-rt-deploy-github-ac@tvrr-409423.iam.gserviceaccount.com'
         workload_identity_provider: 'projects/1072483117171/locations/global/workloadIdentityPools/github/providers/actransit-rt-repo'
 
     - name: 'Set up Cloud SDK'
@@ -30,14 +33,10 @@ jobs:
       with:
         version: '>= 390.0.0'
 
-    - name: 'Use gcloud CLI'
-      run: 'gcloud info'
-
     - name: get python version
       run: |
         python_version=$(cat .python-version)
         echo "python_version=${python_version}" >> $GITHUB_ENV
-        poetry self add poetry-plugin-export
 
     - uses: actions/setup-python@v5
       with:
@@ -47,6 +46,7 @@ jobs:
       run: |
         curl -sSL https://install.python-poetry.org | python -
         echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+        poetry self add poetry-plugin-export
 
     - name: load poetry install from cache
       id: cached-poetry-dependencies
@@ -62,14 +62,16 @@ jobs:
         poetry install
 
     - name: export requirements
-      run: poetry export -f requirements.txt --output src/actransit-rt/functions/requirements.txt
+      run: poetry export -f requirements.txt --output $FUNCTIONS_DIR/requirements.txt
 
     - name: 'Deploy Hello'
-      run: >
-        gcloud functions deploy actransit-rt-hello
-          --gen2
-          --region=us-west1
-          --runtime=python312
-          --source=src/actransit-rt/functions
-          --entry-point=hello
-          --trigger-http
+      run: |
+        gcloud functions deploy actransit-rt-hello \
+          --gen2 \
+          --region=us-west1 \
+          --runtime=python312 \
+          --source=$FUNCTIONS_DIR \
+          --entry-point=hello \
+          --concurrency=1 \
+          --trigger-http \
+          --no-allow-unauthenticated
