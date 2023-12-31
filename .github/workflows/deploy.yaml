@@ -30,9 +30,6 @@ jobs:
       with:
         version: '>= 390.0.0'
 
-    - name: 'Use gcloud CLI'
-      run: 'gcloud info'
-
     - name: get python version
       run: |
         python_version=$(cat .python-version)
