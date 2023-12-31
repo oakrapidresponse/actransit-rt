@@ -22,7 +22,7 @@ jobs:
     - id: 'auth'
       uses: 'google-github-actions/auth@v2'
       with:
-        project_id: 'tvrr-409423'
+        service_account: 'ac-transit-rt-deploy-github-ac@tvrr-409423.iam.gserviceaccount.com'
         workload_identity_provider: 'projects/1072483117171/locations/global/workloadIdentityPools/github/providers/actransit-rt-repo'
 
     - name: 'Set up Cloud SDK'
