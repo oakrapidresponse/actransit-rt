@@ -201,7 +201,7 @@ def archive_group() -> None:
 @_input_dir_option()
 @_start_option()
 @_end_option()
-def snapshots_tripupdates(
+def archive_tripupdates(
     input_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime
 ) -> None:
     """Display archived trip update feeds."""
@@ -213,7 +213,7 @@ def snapshots_tripupdates(
 @_input_dir_option()
 @_start_option()
 @_end_option()
-def snapshots_vehicles(
+def archive_vehicles(
     input_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime
 ) -> None:
     """Display archived vehicles feeds."""
@@ -225,7 +225,7 @@ def snapshots_vehicles(
 @_input_dir_option()
 @_start_option()
 @_end_option()
-def snapshots_alerts(
+def archive_alerts(
     input_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime
 ) -> None:
     """Display archived alert feeds."""
