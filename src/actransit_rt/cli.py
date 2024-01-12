@@ -15,6 +15,7 @@ from typing import TypeAlias
 import click
 import cloudpathlib
 import dotenv
+import pendulum
 import smart_open
 
 from .functions import archive, gtfs
@@ -30,6 +31,24 @@ def _cloud_path(ctx: click.Context, param: click.Parameter, value: str) -> APath
     return cloudpathlib.anypath.to_anypath(value)
 
 
+def _pendulum_datetime(
+    ctx: click.Context, param: click.Parameter, value: str
+) -> pendulum.Date | pendulum.DateTime | None:
+    """Parameter callback for click to transform str into pendulum datetime"""
+    if not value:
+        return None
+
+    parsed = pendulum.parse(value, tz="America/Los_Angeles")
+
+    if isinstance(parsed, pendulum.Duration):
+        raise ValueError("Must specify a date or datetime, not a duration")
+
+    if isinstance(parsed, pendulum.Time):
+        raise ValueError("Must specify a date or datetime, not a time")
+
+    return parsed
+
+
 def _output_option() -> Callable:
     return click.option(
         "--output",
@@ -42,12 +61,40 @@ def _api_token_option() -> Callable:
     return click.option(
         "--api-token",
         default=lambda: os.environ.get("ACTRANSIT_API_TOKEN", ""),
-        show_default="ACTRANSIT_API_TOKEN",
+        show_default="$ACTRANSIT_API_TOKEN",
+    )
+
+
+def _input_dir_option() -> Callable:
+    return click.option(
+        "--input-dir",
+        type=str,
+        default=lambda: os.environ.get("INPUT_DIR", ""),
+        callback=_cloud_path,
+        show_default="$INPUT_DIR",
     )
 
 
 def _dry_run_option() -> Callable:
     return click.option("--dry-run/--no-dry-run", type=bool, default=False)
+
+
+def _start_option() -> Callable:
+    return click.option(
+        "--start",
+        type=str,
+        callback=_pendulum_datetime,
+        default=lambda: pendulum.now("America/Los_Angeles"),
+    )
+
+
+def _end_option() -> Callable:
+    return click.option(
+        "--end",
+        type=str,
+        callback=_pendulum_datetime,
+        default=lambda: pendulum.now("America/Los_Angeles"),
+    )
 
 
 @click.group()
@@ -68,7 +115,8 @@ def version() -> None:
     "--output-dir",
     type=str,
     callback=_cloud_path,
-    required=True,
+    default=lambda: os.environ.get("OUTPUT_DIR", ""),
+    show_default="$OUTPUT_DIR",
 )
 @_dry_run_option()
 def snapshot(api_token: str, output_dir: APath, dry_run: bool) -> None:
@@ -125,6 +173,48 @@ def api_alerts(api_token: str, output: APath | None) -> None:
             fout.write(feed_bytes)
     else:
         click.echo(feed)
+
+
+@cli.group("archive")
+def archive_group() -> None:
+    """Run archive commands"""
+    pass
+
+
+@archive_group.command(name="tripupdates")
+@_input_dir_option()
+@_start_option()
+@_end_option()
+def snapshots_tripupdates(
+    input_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime
+) -> None:
+    """Display archived trip update feeds."""
+    feeds = archive.retrieve_tripupdate_feeds(input_dir, start, end)
+    click.echo(list(feeds))
+
+
+@archive_group.command(name="vehicles")
+@_input_dir_option()
+@_start_option()
+@_end_option()
+def snapshots_vehicles(
+    input_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime
+) -> None:
+    """Display archived vehicles feeds."""
+    feeds = archive.retrieve_vehicle_feeds(input_dir, start, end)
+    click.echo(list(feeds))
+
+
+@archive_group.command(name="alerts")
+@_input_dir_option()
+@_start_option()
+@_end_option()
+def snapshots_alerts(
+    input_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime
+) -> None:
+    """Display archived alert feeds."""
+    feeds = archive.retrieve_alert_feeds(input_dir, start, end)
+    click.echo(list(feeds))
 
 
 if __name__ == "__main__":

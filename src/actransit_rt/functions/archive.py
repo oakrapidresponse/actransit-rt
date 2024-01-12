@@ -5,11 +5,13 @@
 /actransit/realtime/vehicles/2024/02/15/1703994731.vehicles.pb.gz
 """
 import pathlib
+from collections.abc import Iterator
 from typing import TypeAlias
 
 import cloudpathlib
 import pendulum
 import smart_open
+from google.transit import gtfs_realtime_pb2
 
 from . import gtfs
 
@@ -94,3 +96,57 @@ def snapshot_vehicles_feed(
     feed_bytes: str = feed.SerializeToString()
     with smart_open.open(str(output), "wb") as fout:
         fout.write(feed_bytes)
+
+
+def retrieve_tripupdate_feeds(
+    base_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime
+) -> Iterator:
+    start_utc = start.in_tz("UTC")
+    end_utc = end.in_tz("UTC")
+
+    for day in pendulum.interval(start_utc, end_utc).range("days"):
+        output_path = base_path("tripupdates", base_dir, day)
+        feed_paths = output_path.glob("*.tripupdates.pb.gz")
+
+        for feed_path in feed_paths:
+            with smart_open.open(str(feed_path), "rb") as fin:
+                feed = gtfs_realtime_pb2.FeedMessage()
+                feed.ParseFromString(fin.read())
+
+                yield feed
+
+
+def retrieve_alert_feeds(
+    base_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime
+) -> Iterator:
+    start_utc = start.in_tz("UTC")
+    end_utc = end.in_tz("UTC")
+
+    for day in pendulum.interval(start_utc, end_utc).range("days"):
+        output_path = base_path("alerts", base_dir, day)
+        feed_paths = output_path.glob("*.alerts.pb.gz")
+
+        for feed_path in feed_paths:
+            with smart_open.open(str(feed_path), "rb") as fin:
+                feed = gtfs_realtime_pb2.FeedMessage()
+                feed.ParseFromString(fin.read())
+
+                yield feed
+
+
+def retrieve_vehicle_feeds(
+    base_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime
+) -> Iterator:
+    start_utc = start.in_tz("UTC")
+    end_utc = end.in_tz("UTC")
+
+    for day in pendulum.interval(start_utc, end_utc).range("days"):
+        output_path = base_path("vehicles", base_dir, day)
+        feed_paths = output_path.glob("*.vehicles.pb.gz")
+
+        for feed_path in feed_paths:
+            with smart_open.open(str(feed_path), "rb") as fin:
+                feed = gtfs_realtime_pb2.FeedMessage()
+                feed.ParseFromString(fin.read())
+
+                yield feed
