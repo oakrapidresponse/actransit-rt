@@ -101,10 +101,14 @@ def snapshot_vehicles_feed(
 def retrieve_tripupdate_feeds(
     base_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime
 ) -> Iterator:
-    start_utc = start.in_tz("UTC")
-    end_utc = end.in_tz("UTC")
+    start_date = start.in_tz("UTC").date()
+    end_date = end.in_tz("UTC").date()
 
-    for day in pendulum.interval(start_utc, end_utc).range("days"):
+    num_days = end_date.diff(start_date).in_days()
+
+    for i in range(num_days + 1):
+        day = start_date.add(days=i)
+
         output_path = base_path("tripupdates", base_dir, day)
         feed_paths = output_path.glob("*.tripupdates.pb.gz")
 
@@ -119,10 +123,14 @@ def retrieve_tripupdate_feeds(
 def retrieve_alert_feeds(
     base_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime
 ) -> Iterator:
-    start_utc = start.in_tz("UTC")
-    end_utc = end.in_tz("UTC")
+    start_date = start.in_tz("UTC").date()
+    end_date = end.in_tz("UTC").date()
 
-    for day in pendulum.interval(start_utc, end_utc).range("days"):
+    num_days = end_date.diff(start_date).in_days()
+
+    for i in range(num_days + 1):
+        day = start_date.add(days=i)
+
         output_path = base_path("alerts", base_dir, day)
         feed_paths = output_path.glob("*.alerts.pb.gz")
 
@@ -137,10 +145,14 @@ def retrieve_alert_feeds(
 def retrieve_vehicle_feeds(
     base_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime
 ) -> Iterator:
-    start_utc = start.in_tz("UTC")
-    end_utc = end.in_tz("UTC")
+    start_date = start.in_tz("UTC").date()
+    end_date = end.in_tz("UTC").date()
 
-    for day in pendulum.interval(start_utc, end_utc).range("days"):
+    num_days = end_date.diff(start_date).in_days()
+
+    for i in range(num_days + 1):
+        day = start_date.add(days=i)
+
         output_path = base_path("vehicles", base_dir, day)
         feed_paths = output_path.glob("*.vehicles.pb.gz")
 

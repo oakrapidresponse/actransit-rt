@@ -10,7 +10,7 @@ Example usage:
 import os
 import pathlib
 from collections.abc import Callable
-from typing import TypeAlias
+from typing import Literal, TypeAlias
 
 import click
 import cloudpathlib
@@ -31,22 +31,38 @@ def _cloud_path(ctx: click.Context, param: click.Parameter, value: str) -> APath
     return cloudpathlib.anypath.to_anypath(value)
 
 
-def _pendulum_datetime(
-    ctx: click.Context, param: click.Parameter, value: str
-) -> pendulum.Date | pendulum.DateTime | None:
-    """Parameter callback for click to transform str into pendulum datetime"""
-    if not value:
+def _pendulum_datetime(side: Literal["start"] | Literal["end"] = "start") -> Callable:
+    def _callback(
+        ctx: click.Context, param: click.Parameter, value: str
+    ) -> pendulum.DateTime | None:
+        """Parameter callback for click to transform str into pendulum datetime"""
+        if not value:
+            return None
+
+        parsed = pendulum.parse(value, tz="America/Los_Angeles", exact=True)
+
+        if isinstance(parsed, pendulum.DateTime):
+            return parsed
+
+        elif isinstance(parsed, pendulum.Duration):
+            raise ValueError("Must specify a date or datetime, not a duration")
+
+        elif isinstance(parsed, pendulum.Time):
+            raise ValueError("Must specify a date or datetime, not a time")
+
+        elif isinstance(parsed, pendulum.Date):
+            parsed_dt = pendulum.datetime(
+                parsed.year, parsed.month, parsed.day, tz="America/Los_Angeles"
+            )
+
+            if side == "start":
+                return parsed_dt.start_of("day")
+            else:
+                return parsed_dt.end_of("day")
+
         return None
 
-    parsed = pendulum.parse(value, tz="America/Los_Angeles")
-
-    if isinstance(parsed, pendulum.Duration):
-        raise ValueError("Must specify a date or datetime, not a duration")
-
-    if isinstance(parsed, pendulum.Time):
-        raise ValueError("Must specify a date or datetime, not a time")
-
-    return parsed
+    return _callback
 
 
 def _output_option() -> Callable:
@@ -83,7 +99,7 @@ def _start_option() -> Callable:
     return click.option(
         "--start",
         type=str,
-        callback=_pendulum_datetime,
+        callback=_pendulum_datetime("start"),
         default=lambda: pendulum.now("America/Los_Angeles"),
     )
 
@@ -92,7 +108,7 @@ def _end_option() -> Callable:
     return click.option(
         "--end",
         type=str,
-        callback=_pendulum_datetime,
+        callback=_pendulum_datetime("end"),
         default=lambda: pendulum.now("America/Los_Angeles"),
     )
 
