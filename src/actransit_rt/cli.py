@@ -73,9 +73,7 @@ def version() -> None:
 @_dry_run_option()
 def snapshot(api_token: str, output_dir: APath, dry_run: bool) -> None:
     """Snapshot and archive all realtime feeds."""
-    archive.snapshot_feeds(
-        api_token=api_token, output_dir=output_dir, is_dryrun=dry_run
-    )
+    archive.snapshot_all(api_token=api_token, output_dir=output_dir, is_dryrun=dry_run)
 
 
 @cli.group("api")

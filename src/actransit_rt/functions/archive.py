@@ -29,7 +29,7 @@ def output_path(kind: str, output_dir: APath, timestamp: int) -> APath:
     )
 
 
-def snapshot_feeds(api_token: str, output_dir: APath, is_dryrun: bool = False) -> None:
+def snapshot_all(api_token: str, output_dir: APath, is_dryrun: bool = False) -> None:
     snapshot_tripupdates_feed(api_token, output_dir, is_dryrun=is_dryrun)
     snapshot_alerts_feed(api_token, output_dir, is_dryrun=is_dryrun)
     snapshot_vehicles_feed(api_token, output_dir, is_dryrun=is_dryrun)

@@ -36,7 +36,7 @@ def snapshot_feeds(request: flask.Request) -> flask.typing.ResponseReturnValue:
         print("Must configure a valid gs:// OUTPUT_DIR")
         return "Bad config"
 
-    archive.snapshot_feeds(
+    archive.snapshot_all(
         api_token=api_token, output_dir=output_path, is_dryrun=is_dryrun
     )
 
