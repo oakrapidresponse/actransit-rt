@@ -5,10 +5,10 @@
 /actransit/realtime/vehicles/2024/02/15/1703994731.vehicles.pb.gz
 """
 import pathlib
-from datetime import datetime
 from typing import TypeAlias
 
 import cloudpathlib
+import pendulum
 import smart_open
 
 from . import gtfs
@@ -16,17 +16,15 @@ from . import gtfs
 APath: TypeAlias = cloudpathlib.CloudPath | pathlib.Path
 
 
-def output_path(kind: str, output_dir: APath, timestamp: int) -> APath:
-    date = datetime.fromtimestamp(timestamp)
-
+def base_path(kind: str, output_dir: APath, day: pendulum.Date) -> APath:
     return (
-        output_dir
-        / kind
-        / date.strftime("%Y")
-        / date.strftime("%m")
-        / date.strftime("%d")
-        / f"{timestamp}.{kind}.pb.gz"
+        output_dir / kind / day.strftime("%Y") / day.strftime("%m") / day.strftime("%d")
     )
+
+
+def output_path(kind: str, output_dir: APath, timestamp: int) -> APath:
+    day = pendulum.from_timestamp(timestamp, tz="UTC")
+    return base_path(kind, output_dir, day) / f"{timestamp}.{kind}.pb.gz"
 
 
 def snapshot_all(api_token: str, output_dir: APath, is_dryrun: bool = False) -> None:
