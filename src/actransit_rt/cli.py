@@ -77,15 +77,15 @@ def snapshot(api_token: str, output_dir: APath, dry_run: bool) -> None:
 
 
 @cli.group("api")
-def api() -> None:
-    """Run realtime commands"""
+def api_group() -> None:
+    """Run api commands"""
     pass
 
 
-@api.command()
+@api_group.command(name="tripupdates")
 @_api_token_option()
 @_output_option()
-def tripupdates(api_token: str, output: APath | None) -> None:
+def api_tripupdates(api_token: str, output: APath | None) -> None:
     """Return trip updates feed."""
     feed = gtfs.retrieve_tripupdates_feed(token=api_token)
 
@@ -97,10 +97,10 @@ def tripupdates(api_token: str, output: APath | None) -> None:
         click.echo(feed)
 
 
-@api.command()
+@api_group.command(name="vehicles")
 @_api_token_option()
 @_output_option()
-def vehicles(api_token: str, output: APath | None) -> None:
+def api_vehicles(api_token: str, output: APath | None) -> None:
     """Return vehicles feed."""
     feed = gtfs.retrieve_vehicles_feed(token=api_token)
 
@@ -112,10 +112,10 @@ def vehicles(api_token: str, output: APath | None) -> None:
         click.echo(feed)
 
 
-@api.command()
+@api_group.command(name="alerts")
 @_api_token_option()
 @_output_option()
-def alerts(api_token: str, output: APath | None) -> None:
+def api_alerts(api_token: str, output: APath | None) -> None:
     """Return alerts feed."""
     feed = gtfs.retrieve_alerts_feed(token=api_token)
 
