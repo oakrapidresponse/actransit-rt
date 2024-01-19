@@ -9,7 +9,7 @@ python = "^3.12"
 click = "8.1.7"
 python-dotenv = "1.0.0"
 functions-framework = "3.5.0"
-flask = "3.0.0"
+flask = "3.0.1"
 gtfs-realtime-bindings = "1.0.0"
 requests = "2.31.0"
 smart-open = {version = "6.4.0", extras = ["gcs"]}
