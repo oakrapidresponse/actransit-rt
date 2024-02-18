@@ -7,7 +7,7 @@ authors = ["Bryan Culbertson <bryan.culbertson@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.12"
 click = "8.1.7"
-python-dotenv = "1.0.0"
+python-dotenv = "1.0.1"
 functions-framework = "3.5.0"
 flask = "3.0.2"
 gtfs-realtime-bindings = "1.0.0"
