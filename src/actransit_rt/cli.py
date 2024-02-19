@@ -7,6 +7,7 @@ Example usage:
     poetry run actransit-rt version
 
 """
+import dataclasses
 import os
 import pathlib
 from collections.abc import Callable
@@ -121,6 +122,14 @@ def _limit_option() -> Callable:
     )
 
 
+def _format_option() -> Callable:
+    return click.option(
+        "--format",
+        type=click.Choice(["pb", "dict", "df"]),
+        default="df",
+    )
+
+
 @click.group()
 def cli() -> None:
     """Run cli commands"""
@@ -224,13 +233,27 @@ def archive_retrieve_tripupdates(
 @_start_option()
 @_end_option()
 @_limit_option()
+@_format_option()
 def archive_retrieve_vehicles(
-    input_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime, limit: int
+    input_dir: APath,
+    start: pendulum.DateTime,
+    end: pendulum.DateTime,
+    limit: int,
+    format: Literal["pb"] | Literal["dict"] | Literal["df"],
 ) -> None:
     """Display archived vehicles feeds."""
     feeds = archive.retrieve_vehicle_feeds(input_dir, start, end, limit)
-    for feed in feeds:
-        click.echo(feed)
+
+    if format == "pb":
+        for feed in feeds:
+            click.echo(feed)
+
+    elif format == "dict":
+        for feed in archive.vehicle_models_from_feeds(feeds):
+            click.echo(dataclasses.asdict(feed))
+
+    elif format == "df":
+        click.echo(archive.vehicle_df_from_feeds(feeds))
 
 
 @archive_group.command(name="retrieve-alerts")
