@@ -12,5 +12,8 @@
         "**/.tox/**": true,
         "**/.venv/**": true,
         "**/out/**": true
+    },
+    "yaml.schemas": {
+        "https://json.schemastore.org/github-workflow.json": "file:///workspaces/actransit-rt/.github/workflows/deploy.yaml"
     }
 }

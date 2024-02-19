@@ -113,6 +113,14 @@ def _end_option() -> Callable:
     )
 
 
+def _limit_option() -> Callable:
+    return click.option(
+        "--limit",
+        type=int,
+        default=10,
+    )
+
+
 @click.group()
 def cli() -> None:
     """Run cli commands"""
@@ -197,40 +205,46 @@ def archive_group() -> None:
     pass
 
 
-@archive_group.command(name="tripupdates")
+@archive_group.command(name="retrieve-tripupdates")
 @_input_dir_option()
 @_start_option()
 @_end_option()
-def snapshots_tripupdates(
-    input_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime
+@_limit_option()
+def archive_retrieve_tripupdates(
+    input_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime, limit: int
 ) -> None:
     """Display archived trip update feeds."""
-    feeds = archive.retrieve_tripupdate_feeds(input_dir, start, end)
-    click.echo(list(feeds))
+    feeds = archive.retrieve_tripupdate_feeds(input_dir, start, end, limit)
+    for feed in feeds:
+        click.echo(feed)
 
 
-@archive_group.command(name="vehicles")
+@archive_group.command(name="retrieve-vehicles")
 @_input_dir_option()
 @_start_option()
 @_end_option()
-def snapshots_vehicles(
-    input_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime
+@_limit_option()
+def archive_retrieve_vehicles(
+    input_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime, limit: int
 ) -> None:
     """Display archived vehicles feeds."""
-    feeds = archive.retrieve_vehicle_feeds(input_dir, start, end)
-    click.echo(list(feeds))
+    feeds = archive.retrieve_vehicle_feeds(input_dir, start, end, limit)
+    for feed in feeds:
+        click.echo(feed)
 
 
-@archive_group.command(name="alerts")
+@archive_group.command(name="retrieve-alerts")
 @_input_dir_option()
 @_start_option()
 @_end_option()
-def snapshots_alerts(
-    input_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime
+@_limit_option()
+def archive_retrieve_alerts(
+    input_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime, limit: int
 ) -> None:
     """Display archived alert feeds."""
-    feeds = archive.retrieve_alert_feeds(input_dir, start, end)
-    click.echo(list(feeds))
+    feeds = archive.retrieve_alert_feeds(input_dir, start, end, limit)
+    for feed in feeds:
+        click.echo(feed)
 
 
 if __name__ == "__main__":

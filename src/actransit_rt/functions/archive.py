@@ -4,6 +4,7 @@
 /actransit/realtime/alerts/2024/02/15/1703994731.alerts.pb.gz
 /actransit/realtime/vehicles/2024/02/15/1703994731.vehicles.pb.gz
 """
+
 import pathlib
 from collections.abc import Iterator
 from typing import TypeAlias
@@ -99,13 +100,14 @@ def snapshot_vehicles_feed(
 
 
 def retrieve_tripupdate_feeds(
-    base_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime
+    base_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime, limit: int
 ) -> Iterator:
     start_date = start.in_tz("UTC").date()
     end_date = end.in_tz("UTC").date()
 
     num_days = end_date.diff(start_date).in_days()
 
+    num_records = 0
     for i in range(num_days + 1):
         day = start_date.add(days=i)
 
@@ -113,21 +115,27 @@ def retrieve_tripupdate_feeds(
         feed_paths = output_path.glob("*.tripupdates.pb.gz")
 
         for feed_path in feed_paths:
+            if limit and num_records >= limit:
+                break
+
             with smart_open.open(str(feed_path), "rb") as fin:
                 feed = gtfs_realtime_pb2.FeedMessage()
                 feed.ParseFromString(fin.read())
 
                 yield feed
 
+            num_records += 1
+
 
 def retrieve_alert_feeds(
-    base_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime
+    base_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime, limit: int
 ) -> Iterator:
     start_date = start.in_tz("UTC").date()
     end_date = end.in_tz("UTC").date()
 
     num_days = end_date.diff(start_date).in_days()
 
+    num_records = 0
     for i in range(num_days + 1):
         day = start_date.add(days=i)
 
@@ -135,21 +143,27 @@ def retrieve_alert_feeds(
         feed_paths = output_path.glob("*.alerts.pb.gz")
 
         for feed_path in feed_paths:
+            if limit and num_records >= limit:
+                break
+
             with smart_open.open(str(feed_path), "rb") as fin:
                 feed = gtfs_realtime_pb2.FeedMessage()
                 feed.ParseFromString(fin.read())
 
                 yield feed
 
+            num_records += 1
+
 
 def retrieve_vehicle_feeds(
-    base_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime
+    base_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime, limit: int
 ) -> Iterator:
     start_date = start.in_tz("UTC").date()
     end_date = end.in_tz("UTC").date()
 
     num_days = end_date.diff(start_date).in_days()
 
+    num_records = 0
     for i in range(num_days + 1):
         day = start_date.add(days=i)
 
@@ -157,8 +171,13 @@ def retrieve_vehicle_feeds(
         feed_paths = output_path.glob("*.vehicles.pb.gz")
 
         for feed_path in feed_paths:
+            if limit and num_records >= limit:
+                break
+
             with smart_open.open(str(feed_path), "rb") as fin:
                 feed = gtfs_realtime_pb2.FeedMessage()
                 feed.ParseFromString(fin.read())
 
                 yield feed
+
+            num_records += 1
