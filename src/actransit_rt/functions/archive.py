@@ -156,7 +156,11 @@ def retrieve_alert_feeds(
 
 
 def retrieve_vehicle_positions(
-    base_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime, limit: int
+    base_dir: APath,
+    start: pendulum.DateTime,
+    end: pendulum.DateTime,
+    filter: dict[str, str] | None = None,
+    limit: int | None = None,
 ) -> Iterator[model.VehiclePosition]:
     start_date = start.in_tz("UTC").date()
     end_date = end.in_tz("UTC").date()
@@ -185,6 +189,18 @@ def retrieve_vehicle_positions(
                 if limit and num_records >= limit:
                     break
 
-                yield model.VehiclePosition.from_feed(entity.vehicle)
+                vehicle = model.VehiclePosition.from_feed(entity.vehicle)
+
+                is_match = True
+                if filter:
+                    for key, value in filter.items():
+                        if getattr(vehicle, key) != value:
+                            is_match = False
+                            break
+
+                if not is_match:
+                    continue
+
+                yield vehicle
 
                 num_records += 1

@@ -131,6 +131,16 @@ def _format_option() -> Callable:
     )
 
 
+def _filter_option() -> Callable:
+    return click.option(
+        "--filter",
+        type=str,
+        callback=lambda ctx, param, value: dict(
+            [v.split(":") for v in value.split(",")]
+        ),
+    )
+
+
 @click.group()
 def cli() -> None:
     """Run cli commands"""
@@ -233,6 +243,7 @@ def archive_retrieve_tripupdates(
 @_input_dir_option()
 @_start_option()
 @_end_option()
+@_filter_option()
 @_limit_option()
 @_output_option()
 @_format_option()
@@ -240,12 +251,13 @@ def archive_retrieve_vehicles(
     input_dir: APath,
     start: pendulum.DateTime,
     end: pendulum.DateTime,
-    limit: int,
+    filter: dict[str, str] | None,
+    limit: int | None,
     output: APath | None,
     format: Literal["jsonl"] | Literal["csv"] | Literal["parquet"],
 ) -> None:
     """Display archived vehicles feeds."""
-    vehicles = archive.retrieve_vehicle_positions(input_dir, start, end, limit)
+    vehicles = archive.retrieve_vehicle_positions(input_dir, start, end, filter, limit)
 
     if output:
         vehicle_df = pd.DataFrame(vehicles)
