@@ -165,6 +165,9 @@ def retrieve_vehicle_positions(
 
     num_records = 0
     for i in range(num_days + 1):
+        if limit and num_records >= limit:
+            break
+
         day = start_date.add(days=i)
 
         output_path = base_path("vehicles", base_dir, day)
@@ -179,6 +182,9 @@ def retrieve_vehicle_positions(
                 feed.ParseFromString(fin.read())
 
             for entity in feed.entity:
+                if limit and num_records >= limit:
+                    break
+
                 yield model.VehiclePosition.from_feed(entity.vehicle)
 
-            num_records += 1
+                num_records += 1

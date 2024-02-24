@@ -7,7 +7,6 @@ Example usage:
     poetry run actransit-rt version
 
 """
-import dataclasses
 import os
 import pathlib
 from collections.abc import Callable
@@ -16,6 +15,7 @@ from typing import Literal, TypeAlias
 import click
 import cloudpathlib
 import dotenv
+import orjson
 import pandas as pd
 import pendulum
 import smart_open
@@ -245,7 +245,7 @@ def archive_retrieve_vehicles(
     format: Literal["jsonl"] | Literal["csv"] | Literal["parquet"],
 ) -> None:
     """Display archived vehicles feeds."""
-    vehicles = archive.retrieve_vehicles(input_dir, start, end, limit)
+    vehicles = archive.retrieve_vehicle_positions(input_dir, start, end, limit)
 
     if output:
         vehicle_df = pd.DataFrame(vehicles)
@@ -262,7 +262,7 @@ def archive_retrieve_vehicles(
 
     else:
         for vehicle in vehicles:
-            click.echo(dataclasses.asdict(vehicle))
+            click.echo(orjson.dumps(vehicle))
 
 
 @archive_group.command(name="retrieve-alerts")

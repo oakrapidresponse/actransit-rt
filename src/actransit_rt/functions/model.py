@@ -3,6 +3,7 @@ https:#github.com/MobilityData/gtfs-realtime-bindings/blob/master/gtfs-realtime.
 """
 
 import dataclasses
+import datetime
 import enum
 
 import pendulum
@@ -104,7 +105,7 @@ class VehiclePosition:
     trip_id: str | None = None
     route_id: str | None = None
     direction_id: int | None = None
-    start_datetime: pendulum.DateTime | None = None
+    start_datetime: datetime.datetime | None = None
     schedule_relationship: TripScheduleRelationship | None = None
 
     #  Additional information on the vehicle that is serving this trip.
@@ -129,7 +130,7 @@ class VehiclePosition:
     current_status: VehicleStopStatus | None = None
 
     # Moment at which the vehicle's position was measured.
-    timestamp: pendulum.DateTime | None = None
+    timestamp: datetime.datetime | None = None
 
     # Congestion level that is affecting this vehicle.
     congestion_level: VehicleCongestionLevel | None = None
@@ -149,10 +150,11 @@ class VehiclePosition:
         """Create a VehiclePosition from a feed VehiclePosition"""
         start_datetime = None
         if vehicle.trip.start_date and vehicle.trip.start_time:
-            start_datetime = pendulum.from_format(
+            start_pendulum = pendulum.from_format(
                 f"{vehicle.trip.start_date} {vehicle.trip.start_time}",
                 "YYYYMMDD HH:mm:ss",
             )
+            start_datetime = datetime.datetime.fromisoformat(start_pendulum.isoformat())
 
         return VehiclePosition(
             # Trip
@@ -179,7 +181,9 @@ class VehiclePosition:
             current_stop_sequence=vehicle.current_stop_sequence,
             stop_id=vehicle.stop_id if vehicle.stop_id else None,
             current_status=VehicleStopStatus(vehicle.current_status),
-            timestamp=pendulum.from_timestamp(vehicle.timestamp),
+            timestamp=datetime.datetime.fromtimestamp(
+                vehicle.timestamp, tz=pendulum.UTC
+            ),
             congestion_level=(
                 VehicleCongestionLevel(vehicle.congestion_level)
                 if vehicle.congestion_level
