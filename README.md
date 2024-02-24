@@ -12,6 +12,12 @@ Before using the project, either install it by following instructions in [Instal
     actransit-rt version
     ```
 
+- Retrieve latest vehicle positions
+
+    ```python
+    actransit-rt archive retrieve-vehicle-positions --input-dir=gs://tvrr-transit-snapshots/actransit/gtfs-rt --limit=10
+    ```
+
 ## Installation
 
 If not developing, then no need to clone this repo. You can use [pipx](https://github.com/pypa/pipx) to install the project directly. If you don't have `pipx` then first [install it](https://pypa.github.io/pipx/installation/).
@@ -313,6 +319,7 @@ After setting up system environment with `pyenv` and `poetry`, then you can inst
 
     ```sh
       gcloud init
+      gcloud auth application-default login
     ```
 
 ### Testing

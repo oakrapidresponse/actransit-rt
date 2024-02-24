@@ -14,7 +14,7 @@ import pendulum
 import smart_open
 from google.transit import gtfs_realtime_pb2
 
-from . import gtfs
+from . import gtfs, model
 
 APath: TypeAlias = cloudpathlib.CloudPath | pathlib.Path
 
@@ -101,7 +101,7 @@ def snapshot_vehicles_feed(
 
 def retrieve_tripupdate_feeds(
     base_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime, limit: int
-) -> Iterator:
+) -> Iterator[gtfs_realtime_pb2.FeedMessage]:
     start_date = start.in_tz("UTC").date()
     end_date = end.in_tz("UTC").date()
 
@@ -129,7 +129,7 @@ def retrieve_tripupdate_feeds(
 
 def retrieve_alert_feeds(
     base_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime, limit: int
-) -> Iterator:
+) -> Iterator[gtfs_realtime_pb2.FeedMessage]:
     start_date = start.in_tz("UTC").date()
     end_date = end.in_tz("UTC").date()
 
@@ -155,9 +155,9 @@ def retrieve_alert_feeds(
             num_records += 1
 
 
-def retrieve_vehicle_feeds(
+def retrieve_vehicle_positions(
     base_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime, limit: int
-) -> Iterator:
+) -> Iterator[model.VehiclePosition]:
     start_date = start.in_tz("UTC").date()
     end_date = end.in_tz("UTC").date()
 
@@ -165,6 +165,9 @@ def retrieve_vehicle_feeds(
 
     num_records = 0
     for i in range(num_days + 1):
+        if limit and num_records >= limit:
+            break
+
         day = start_date.add(days=i)
 
         output_path = base_path("vehicles", base_dir, day)
@@ -178,6 +181,10 @@ def retrieve_vehicle_feeds(
                 feed = gtfs_realtime_pb2.FeedMessage()
                 feed.ParseFromString(fin.read())
 
-                yield feed
+            for entity in feed.entity:
+                if limit and num_records >= limit:
+                    break
 
-            num_records += 1
+                yield model.VehiclePosition.from_feed(entity.vehicle)
+
+                num_records += 1

@@ -15,6 +15,8 @@ from typing import Literal, TypeAlias
 import click
 import cloudpathlib
 import dotenv
+import orjson
+import pandas as pd
 import pendulum
 import smart_open
 
@@ -121,6 +123,14 @@ def _limit_option() -> Callable:
     )
 
 
+def _format_option() -> Callable:
+    return click.option(
+        "--format",
+        type=click.Choice(["jsonl", "csv", "parquet"]),
+        default="jsonl",
+    )
+
+
 @click.group()
 def cli() -> None:
     """Run cli commands"""
@@ -219,18 +229,40 @@ def archive_retrieve_tripupdates(
         click.echo(feed)
 
 
-@archive_group.command(name="retrieve-vehicles")
+@archive_group.command(name="retrieve-vehicle-positions")
 @_input_dir_option()
 @_start_option()
 @_end_option()
 @_limit_option()
+@_output_option()
+@_format_option()
 def archive_retrieve_vehicles(
-    input_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime, limit: int
+    input_dir: APath,
+    start: pendulum.DateTime,
+    end: pendulum.DateTime,
+    limit: int,
+    output: APath | None,
+    format: Literal["jsonl"] | Literal["csv"] | Literal["parquet"],
 ) -> None:
     """Display archived vehicles feeds."""
-    feeds = archive.retrieve_vehicle_feeds(input_dir, start, end, limit)
-    for feed in feeds:
-        click.echo(feed)
+    vehicles = archive.retrieve_vehicle_positions(input_dir, start, end, limit)
+
+    if output:
+        vehicle_df = pd.DataFrame(vehicles)
+
+        with smart_open.open(str(output), "wb") as fout:
+            if format == "jsonl":
+                vehicle_df.to_json(fout, orient="records", lines=True)
+
+            elif format == "csv":
+                vehicle_df.to_csv(fout, index=False)
+
+            elif format == "parquet":
+                vehicle_df.to_parquet(fout, index=False)
+
+    else:
+        for vehicle in vehicles:
+            click.echo(orjson.dumps(vehicle))
 
 
 @archive_group.command(name="retrieve-alerts")
