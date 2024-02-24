@@ -150,11 +150,18 @@ class VehiclePosition:
         """Create a VehiclePosition from a feed VehiclePosition"""
         start_datetime = None
         if vehicle.trip.start_date and vehicle.trip.start_time:
-            start_pendulum = pendulum.from_format(
-                f"{vehicle.trip.start_date} {vehicle.trip.start_time}",
-                "YYYYMMDD HH:mm:ss",
-            )
-            start_datetime = datetime.datetime.fromisoformat(start_pendulum.isoformat())
+            try:
+                start_pendulum = pendulum.from_format(
+                    f"{vehicle.trip.start_date} {vehicle.trip.start_time}",
+                    "YYYYMMDD HH:mm:ss",
+                )
+                start_datetime = datetime.datetime.fromisoformat(
+                    start_pendulum.isoformat()
+                )
+            except ValueError:
+                print(
+                    f"Error parsing {vehicle.trip.start_date} {vehicle.trip.start_time}"
+                )
 
         return VehiclePosition(
             # Trip
