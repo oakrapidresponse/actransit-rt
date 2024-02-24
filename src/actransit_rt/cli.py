@@ -16,6 +16,7 @@ from typing import Literal, TypeAlias
 import click
 import cloudpathlib
 import dotenv
+import pandas as pd
 import pendulum
 import smart_open
 
@@ -125,8 +126,8 @@ def _limit_option() -> Callable:
 def _format_option() -> Callable:
     return click.option(
         "--format",
-        type=click.Choice(["pb", "dict", "df"]),
-        default="df",
+        type=click.Choice(["jsonl", "csv", "parquet"]),
+        default="jsonl",
     )
 
 
@@ -228,32 +229,40 @@ def archive_retrieve_tripupdates(
         click.echo(feed)
 
 
-@archive_group.command(name="retrieve-vehicles")
+@archive_group.command(name="retrieve-vehicle-positions")
 @_input_dir_option()
 @_start_option()
 @_end_option()
 @_limit_option()
+@_output_option()
 @_format_option()
 def archive_retrieve_vehicles(
     input_dir: APath,
     start: pendulum.DateTime,
     end: pendulum.DateTime,
     limit: int,
-    format: Literal["pb"] | Literal["dict"] | Literal["df"],
+    output: APath | None,
+    format: Literal["jsonl"] | Literal["csv"] | Literal["parquet"],
 ) -> None:
     """Display archived vehicles feeds."""
-    feeds = archive.retrieve_vehicle_feeds(input_dir, start, end, limit)
+    vehicles = archive.retrieve_vehicles(input_dir, start, end, limit)
 
-    if format == "pb":
-        for feed in feeds:
-            click.echo(feed)
+    if output:
+        vehicle_df = pd.DataFrame(vehicles)
 
-    elif format == "dict":
-        for feed in archive.vehicle_models_from_feeds(feeds):
-            click.echo(dataclasses.asdict(feed))
+        with smart_open.open(str(output), "wb") as fout:
+            if format == "jsonl":
+                vehicle_df.to_json(fout, orient="records", lines=True)
 
-    elif format == "df":
-        click.echo(archive.vehicle_df_from_feeds(feeds))
+            elif format == "csv":
+                vehicle_df.to_csv(fout, index=False)
+
+            elif format == "parquet":
+                vehicle_df.to_parquet(fout, index=False)
+
+    else:
+        for vehicle in vehicles:
+            click.echo(dataclasses.asdict(vehicle))
 
 
 @archive_group.command(name="retrieve-alerts")

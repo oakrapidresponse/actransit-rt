@@ -10,7 +10,6 @@ from collections.abc import Iterator
 from typing import TypeAlias
 
 import cloudpathlib
-import pandas as pd
 import pendulum
 import smart_open
 from google.transit import gtfs_realtime_pb2
@@ -156,9 +155,9 @@ def retrieve_alert_feeds(
             num_records += 1
 
 
-def retrieve_vehicle_feeds(
+def retrieve_vehicles(
     base_dir: APath, start: pendulum.DateTime, end: pendulum.DateTime, limit: int
-) -> Iterator[gtfs_realtime_pb2.FeedMessage]:
+) -> Iterator[model.Vehicle]:
     start_date = start.in_tz("UTC").date()
     end_date = end.in_tz("UTC").date()
 
@@ -179,20 +178,7 @@ def retrieve_vehicle_feeds(
                 feed = gtfs_realtime_pb2.FeedMessage()
                 feed.ParseFromString(fin.read())
 
-                yield feed
+            for entity in feed.entity:
+                yield model.Vehicle.from_feed_vehicle(entity.vehicle)
 
             num_records += 1
-
-
-def vehicle_models_from_feeds(
-    feeds: Iterator[gtfs_realtime_pb2.FeedMessage],
-) -> Iterator[model.Vehicle]:
-    for feed in feeds:
-        for entity in feed.entity:
-            yield model.Vehicle.from_feed_vehicle(entity.vehicle)
-
-
-def vehicle_df_from_feeds(
-    feeds: Iterator[gtfs_realtime_pb2.FeedMessage],
-) -> pd.DataFrame:
-    return pd.DataFrame(vehicle_models_from_feeds(feeds))
