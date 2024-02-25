@@ -1,0 +1,68 @@
+---
+name: CLI
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: 'Command to run'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    name: CLI
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    environment: prod
+
+    steps:
+    - uses: 'actions/checkout@v4'
+
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v2'
+      with:
+        service_account: 'ac-transit-rt-deploy-github-ac@tvrr-409423.iam.gserviceaccount.com'
+        workload_identity_provider: 'projects/1072483117171/locations/global/workloadIdentityPools/github/providers/actransit-rt-repo'
+
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v2'
+      with:
+        version: '>= 390.0.0'
+
+    - name: get python version
+      run: |
+        python_version=$(cat .python-version)
+        echo "python_version=${python_version}" >> $GITHUB_ENV
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.python_version }}
+
+    - name: setup poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python -
+        echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+        poetry self add poetry-plugin-export
+
+    - name: load poetry install from cache
+      id: cached-poetry-dependencies
+      uses: actions/cache@v3
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+    - name: install dependancies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: |
+        poetry env use "$(cat .python-version)"
+        poetry install
+
+    - name: export requirements
+      run: poetry export -f requirements.txt --output $FUNCTIONS_DIR/requirements.txt
+
+    - name: 'Run'
+      run: |
+        poetry run python src/actransit_rt/cli.py ${{ inputs.command }}
