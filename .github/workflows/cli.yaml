@@ -60,9 +60,6 @@ jobs:
         poetry env use "$(cat .python-version)"
         poetry install
 
-    - name: export requirements
-      run: poetry export -f requirements.txt --output $FUNCTIONS_DIR/requirements.txt
-
     - name: 'Run'
       run: |
         poetry run python src/actransit_rt/cli.py ${{ inputs.command }}
