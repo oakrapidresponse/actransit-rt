@@ -119,7 +119,6 @@ def _limit_option() -> Callable:
     return click.option(
         "--limit",
         type=int,
-        default=10,
     )
 
 
