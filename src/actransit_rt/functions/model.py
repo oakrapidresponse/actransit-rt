@@ -189,7 +189,7 @@ class VehiclePosition:
             stop_id=vehicle.stop_id if vehicle.stop_id else None,
             current_status=VehicleStopStatus(vehicle.current_status),
             timestamp=datetime.datetime.fromtimestamp(
-                vehicle.timestamp, tz=pendulum.UTC
+                vehicle.timestamp, tz=datetime.UTC
             ),
             congestion_level=(
                 VehicleCongestionLevel(vehicle.congestion_level)
