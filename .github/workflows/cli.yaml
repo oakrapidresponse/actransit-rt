@@ -62,4 +62,10 @@ jobs:
 
     - name: 'Run'
       run: |
-        poetry run python src/actransit_rt/cli.py ${{ inputs.command }}
+        poetry run actransit-rt ${{ inputs.command }}
+
+    - uses: actions/upload-artifact@v4
+      if: ${{ hashFiles('out/') != '' }}
+      with:
+        name: Output
+        path: out
