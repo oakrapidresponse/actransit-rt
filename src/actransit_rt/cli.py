@@ -261,6 +261,9 @@ def archive_retrieve_vehicles(
     if output:
         vehicle_df = pd.DataFrame(vehicles)
 
+        # Ensure the specified output directory exists
+        output.parent.mkdir(parents=True, exist_ok=True)
+
         with smart_open.open(str(output), "wb") as fout:
             if format == "jsonl":
                 vehicle_df.to_json(fout, orient="records", lines=True)
