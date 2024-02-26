@@ -231,13 +231,13 @@ pydantic = ["pydantic (>=1.0.0,<3.0)"]
 
 [[package]]
 name = "cloudpathlib"
-version = "0.17.0"
+version = "0.18.0"
 description = "pathlib-style classes for cloud storage services."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "cloudpathlib-0.17.0-py3-none-any.whl", hash = "sha256:8051854fc8bc52d1fd8775d68f235a781e38c1354b4776643e5ef87dd0b36742"},
-    {file = "cloudpathlib-0.17.0.tar.gz", hash = "sha256:097c94926d0e8b76df61fec12ba1b725728c6a77071ca7e6565be93fb4496ff9"},
+    {file = "cloudpathlib-0.18.0-py3-none-any.whl", hash = "sha256:15cceae0631e0c4c71fe47fa738af99def564820a18cef74faadb9175ec293ad"},
+    {file = "cloudpathlib-0.18.0.tar.gz", hash = "sha256:07b72c3ce596a65b55f94339c7aa9601e18597b88c857354c90431b22e5c32fd"},
 ]
 
 [package.dependencies]
@@ -1850,4 +1850,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "6e9647fcc24ecd1e99cfa12924aeb6b086fa629f2da30dc140defa4972267c23"
+content-hash = "570bd9f9dcf9eca6353585e90917da09bcf975625ef71c1c3a41686e72c39484"
