@@ -16,6 +16,7 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
+    environment: dev
 
     steps:
     - uses: 'actions/checkout@v4'
@@ -23,8 +24,7 @@ jobs:
     - id: 'auth'
       uses: 'google-github-actions/auth@v2'
       with:
-        service_account: 'ac-transit-rt-deploy-github-ac@tvrr-409423.iam.gserviceaccount.com'
-        workload_identity_provider: 'projects/1072483117171/locations/global/workloadIdentityPools/github/providers/actransit-rt-repo'
+        credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
 
     - name: 'Set up Cloud SDK'
       uses: 'google-github-actions/setup-gcloud@v2'
