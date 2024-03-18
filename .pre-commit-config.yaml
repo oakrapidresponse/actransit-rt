@@ -70,7 +70,8 @@ repos:
           - --config-file=mypy.ini
           - --pretty
         additional_dependencies: [
-          "types-requests==2.31.0.20231231"
+          "types-requests==2.31.0.20231231",
+          "types-pytz==2024.1.0.20240203",
         ]
 
   - repo: https://github.com/python-poetry/poetry
