@@ -119,12 +119,12 @@ class VehiclePosition:
 
     # The Trip that this vehicle is serving.
     # Can be empty or partial if the vehicle can not be identified with a given trip instance.
-    trip_id: str
+    trip_id: str | None = None
     route_id: str | None = None
     direction_id: int | None = None
-    start_date: str
-    start_time: str
-    start_datetime: datetime.datetime
+    start_date: str | None = None
+    start_time: str | None = None
+    start_datetime: datetime.datetime | None = None
     schedule_relationship: TripScheduleRelationship | None = None
 
     #  Additional information on the vehicle that is serving this trip.
@@ -133,8 +133,8 @@ class VehiclePosition:
     vehicle_license_plate: str | None = None
 
     #  Current position of this vehicle.
-    latitude: float | None
-    longitude: float | None
+    latitude: float
+    longitude: float
     bearing: float | None = None
     odometer: float | None = None
     speed: float | None = None
@@ -174,25 +174,19 @@ class VehiclePosition:
 
         vehicle: gtfs_realtime_pb2.VehiclePosition = entity.vehicle
 
-        if not vehicle.HasField("trip"):
-            raise ValueError("VehiclePosition does not have a trip")
-
-        if not vehicle.trip.HasField("start_date"):
-            raise ValueError("Vehicle.trip does not have a start_date")
-
-        if not vehicle.trip.HasField("start_time"):
-            raise ValueError("Vehicle.trip does not have a start_time")
-
-        if not vehicle.trip.HasField("schedule_relationship"):
-            raise ValueError("Vehicle.trip does not have a schedule_relationship")
-
         if not vehicle.HasField("position"):
             raise ValueError("VehiclePosition does not have a position")
+
+        if not vehicle.position.HasField("latitude"):
+            raise ValueError("VehiclePosition does not have a latitude")
+
+        if not vehicle.position.HasField("longitude"):
+            raise ValueError("VehiclePosition does not have a longitude")
 
         return VehiclePosition(
             entity_id=entity.id,
             # Trip
-            trip_id=vehicle.trip.trip_id,
+            trip_id=vehicle.trip.trip_id if vehicle.trip.HasField("trip_id") else None,
             route_id=(
                 vehicle.trip.route_id if vehicle.trip.HasField("route_id") else None
             ),
@@ -201,12 +195,23 @@ class VehiclePosition:
                 if vehicle.trip.HasField("direction_id")
                 else None
             ),
-            start_date=vehicle.trip.start_date,
-            start_time=vehicle.trip.start_time,
-            start_datetime=_parse_gtfs_datetime(
-                vehicle.trip.start_date,
-                vehicle.trip.start_time,
-                tz=pytz.timezone("US/Pacific"),
+            start_date=(
+                vehicle.trip.start_date if vehicle.trip.HasField("start_date") else None
+            ),
+            start_time=(
+                vehicle.trip.start_time if vehicle.trip.HasField("start_time") else None
+            ),
+            start_datetime=(
+                _parse_gtfs_datetime(
+                    vehicle.trip.start_date,
+                    vehicle.trip.start_time,
+                    tz=pytz.timezone("US/Pacific"),
+                )
+                if (
+                    vehicle.trip.HasField("start_date")
+                    and vehicle.trip.HasField("start_time")
+                )
+                else None
             ),
             schedule_relationship=TripScheduleRelationship(
                 vehicle.trip.schedule_relationship
