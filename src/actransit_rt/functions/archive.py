@@ -189,7 +189,7 @@ def retrieve_vehicle_positions(
                 if limit and num_records >= limit:
                     break
 
-                vehicle = model.VehiclePosition.from_feed(entity.vehicle)
+                vehicle = model.VehiclePosition.from_feed(entity)
 
                 is_match = True
                 if filter:

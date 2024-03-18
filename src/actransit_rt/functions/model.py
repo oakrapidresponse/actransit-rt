@@ -6,7 +6,6 @@ import dataclasses
 import datetime
 import enum
 
-import pendulum
 from google.transit import gtfs_realtime_pb2
 
 
@@ -96,27 +95,39 @@ class VehicleOccupancyStatus(enum.IntEnum):
     NOT_BOARDABLE = 8
 
 
+def _parse_gtfs_datetime(gtfs_date: str, gtfs_time: str) -> datetime.datetime:
+    hours, minutes, seconds = tuple(int(token) for token in gtfs_time.split(":"))
+
+    return datetime.datetime.strptime(gtfs_date, "%Y%m%d") + datetime.timedelta(
+        hours=hours, minutes=minutes, seconds=seconds
+    )
+
+
 @dataclasses.dataclass(frozen=True, kw_only=True)
 class VehiclePosition:
     """Data for a GFTS-RT vehicle"""
 
+    entity_id: str
+
     # The Trip that this vehicle is serving.
     # Can be empty or partial if the vehicle can not be identified with a given trip instance.
-    trip_id: str | None = None
+    trip_id: str
     route_id: str | None = None
     direction_id: int | None = None
-    start_datetime: datetime.datetime | None = None
+    start_date: str
+    start_time: str
+    start_datetime: datetime.datetime
     schedule_relationship: TripScheduleRelationship | None = None
 
     #  Additional information on the vehicle that is serving this trip.
-    vehicle_id: str | None = None
+    vehicle_id: str
     vehicle_label: str | None = None
     vehicle_license_plate: str | None = None
 
     #  Current position of this vehicle.
-    latitude: float | None = None
-    longitude: str | None = None
-    bearing: int | None = None
+    latitude: float | None
+    longitude: float | None
+    bearing: float | None = None
     odometer: float | None = None
     speed: float | None = None
 
@@ -130,7 +141,8 @@ class VehiclePosition:
     current_status: VehicleStopStatus | None = None
 
     # Moment at which the vehicle's position was measured.
-    timestamp: datetime.datetime | None = None
+    timestamp: int
+    timestamp_datetime: datetime.datetime
 
     # Congestion level that is affecting this vehicle.
     congestion_level: VehicleCongestionLevel | None = None
@@ -146,31 +158,33 @@ class VehiclePosition:
     occupancy_percentage: int | None = None
 
     @classmethod
-    def from_feed(cls, vehicle: gtfs_realtime_pb2.VehiclePosition) -> "VehiclePosition":
+    def from_feed(cls, entity: gtfs_realtime_pb2.FeedEntity) -> "VehiclePosition":
         """Create a VehiclePosition from a feed VehiclePosition"""
-        start_datetime = None
-        if vehicle.trip.start_date and vehicle.trip.start_time:
-            try:
-                start_pendulum = pendulum.from_format(
-                    f"{vehicle.trip.start_date} {vehicle.trip.start_time}",
-                    "YYYYMMDD HH:mm:ss",
-                )
-                start_datetime = datetime.datetime.fromisoformat(
-                    start_pendulum.isoformat()
-                )
-            except ValueError:
-                print(
-                    f"Error parsing {vehicle.trip.start_date} {vehicle.trip.start_time}"
-                )
+
+        if not entity.vehicle:
+            raise ValueError("Entity is not a VehiclePosition")
+
+        vehicle: gtfs_realtime_pb2.VehiclePosition = entity.vehicle
+
+        if not vehicle.trip:
+            raise ValueError("VehiclePosition does not have a trip")
+
+        if not vehicle.position:
+            raise ValueError("VehiclePosition does not have a position")
 
         return VehiclePosition(
+            entity_id=entity.id,
             # Trip
-            trip_id=vehicle.trip.trip_id if vehicle.trip.trip_id else None,
+            trip_id=vehicle.trip.trip_id,
             route_id=vehicle.trip.route_id if vehicle.trip.route_id else None,
             direction_id=(
                 vehicle.trip.direction_id if vehicle.trip.direction_id else None
             ),
-            start_datetime=start_datetime,
+            start_date=vehicle.trip.start_date,
+            start_time=vehicle.trip.start_time,
+            start_datetime=_parse_gtfs_datetime(
+                vehicle.trip.start_date, vehicle.trip.start_time
+            ),
             schedule_relationship=TripScheduleRelationship(
                 vehicle.trip.schedule_relationship
             ),
@@ -188,7 +202,8 @@ class VehiclePosition:
             current_stop_sequence=vehicle.current_stop_sequence,
             stop_id=vehicle.stop_id if vehicle.stop_id else None,
             current_status=VehicleStopStatus(vehicle.current_status),
-            timestamp=datetime.datetime.fromtimestamp(
+            timestamp=vehicle.timestamp,
+            timestamp_datetime=datetime.datetime.fromtimestamp(
                 vehicle.timestamp, tz=datetime.UTC
             ),
             congestion_level=(
