@@ -15,7 +15,7 @@ requests = "2.31.0"
 smart-open = {version = "6.4.0", extras = ["gcs"]}
 cloudpathlib = {version = "0.17.0", extras = ["gs"]}
 pendulum = "3.0.0"
-pandas = "2.2.0"
+pandas = "2.2.1"
 orjson = "3.9.15"
 pyarrow = "15.0.0"
 
