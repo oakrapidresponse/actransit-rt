@@ -13,7 +13,7 @@ flask = "3.0.2"
 gtfs-realtime-bindings = "1.0.0"
 requests = "2.31.0"
 smart-open = {version = "6.4.0", extras = ["gcs"]}
-cloudpathlib = {version = "0.17.0", extras = ["gs"]}
+cloudpathlib = {version = "0.18.1", extras = ["gs"]}
 pendulum = "3.0.0"
 pandas = "2.2.0"
 orjson = "3.9.15"
