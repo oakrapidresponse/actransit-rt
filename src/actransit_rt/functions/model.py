@@ -6,7 +6,7 @@ import dataclasses
 import datetime
 import enum
 
-import pendulum
+import pytz
 from google.transit import gtfs_realtime_pb2
 
 
@@ -96,27 +96,46 @@ class VehicleOccupancyStatus(enum.IntEnum):
     NOT_BOARDABLE = 8
 
 
+def _parse_gtfs_datetime(
+    gtfs_date: str, gtfs_time: str, tz: pytz.tzinfo.BaseTzInfo | None = None
+) -> datetime.datetime:
+    hours, minutes, seconds = tuple(int(token) for token in gtfs_time.split(":"))
+
+    dt = datetime.datetime.strptime(gtfs_date, "%Y%m%d") + datetime.timedelta(
+        hours=hours, minutes=minutes, seconds=seconds
+    )
+
+    if tz is not None:
+        dt = dt.replace(tzinfo=tz)
+
+    return dt
+
+
 @dataclasses.dataclass(frozen=True, kw_only=True)
 class VehiclePosition:
     """Data for a GFTS-RT vehicle"""
+
+    entity_id: str
 
     # The Trip that this vehicle is serving.
     # Can be empty or partial if the vehicle can not be identified with a given trip instance.
     trip_id: str | None = None
     route_id: str | None = None
     direction_id: int | None = None
+    start_date: str | None = None
+    start_time: str | None = None
     start_datetime: datetime.datetime | None = None
     schedule_relationship: TripScheduleRelationship | None = None
 
     #  Additional information on the vehicle that is serving this trip.
-    vehicle_id: str | None = None
+    vehicle_id: str
     vehicle_label: str | None = None
     vehicle_license_plate: str | None = None
 
     #  Current position of this vehicle.
-    latitude: float | None = None
-    longitude: str | None = None
-    bearing: int | None = None
+    latitude: float
+    longitude: float
+    bearing: float | None = None
     odometer: float | None = None
     speed: float | None = None
 
@@ -130,7 +149,8 @@ class VehiclePosition:
     current_status: VehicleStopStatus | None = None
 
     # Moment at which the vehicle's position was measured.
-    timestamp: datetime.datetime | None = None
+    timestamp: int
+    timestamp_datetime: datetime.datetime
 
     # Congestion level that is affecting this vehicle.
     congestion_level: VehicleCongestionLevel | None = None
@@ -146,60 +166,111 @@ class VehiclePosition:
     occupancy_percentage: int | None = None
 
     @classmethod
-    def from_feed(cls, vehicle: gtfs_realtime_pb2.VehiclePosition) -> "VehiclePosition":
+    def from_feed(cls, entity: gtfs_realtime_pb2.FeedEntity) -> "VehiclePosition":
         """Create a VehiclePosition from a feed VehiclePosition"""
-        start_datetime = None
-        if vehicle.trip.start_date and vehicle.trip.start_time:
-            try:
-                start_pendulum = pendulum.from_format(
-                    f"{vehicle.trip.start_date} {vehicle.trip.start_time}",
-                    "YYYYMMDD HH:mm:ss",
-                )
-                start_datetime = datetime.datetime.fromisoformat(
-                    start_pendulum.isoformat()
-                )
-            except ValueError:
-                print(
-                    f"Error parsing {vehicle.trip.start_date} {vehicle.trip.start_time}"
-                )
+
+        if not entity.HasField("vehicle"):
+            raise ValueError("Entity is not a VehiclePosition")
+
+        vehicle: gtfs_realtime_pb2.VehiclePosition = entity.vehicle
+
+        if not vehicle.HasField("position"):
+            raise ValueError("VehiclePosition does not have a position")
+
+        if not vehicle.position.HasField("latitude"):
+            raise ValueError("VehiclePosition does not have a latitude")
+
+        if not vehicle.position.HasField("longitude"):
+            raise ValueError("VehiclePosition does not have a longitude")
 
         return VehiclePosition(
+            entity_id=entity.id,
             # Trip
-            trip_id=vehicle.trip.trip_id if vehicle.trip.trip_id else None,
-            route_id=vehicle.trip.route_id if vehicle.trip.route_id else None,
-            direction_id=(
-                vehicle.trip.direction_id if vehicle.trip.direction_id else None
+            trip_id=vehicle.trip.trip_id if vehicle.trip.HasField("trip_id") else None,
+            route_id=(
+                vehicle.trip.route_id if vehicle.trip.HasField("route_id") else None
             ),
-            start_datetime=start_datetime,
+            direction_id=(
+                vehicle.trip.direction_id
+                if vehicle.trip.HasField("direction_id")
+                else None
+            ),
+            start_date=(
+                vehicle.trip.start_date if vehicle.trip.HasField("start_date") else None
+            ),
+            start_time=(
+                vehicle.trip.start_time if vehicle.trip.HasField("start_time") else None
+            ),
+            start_datetime=(
+                _parse_gtfs_datetime(
+                    vehicle.trip.start_date,
+                    vehicle.trip.start_time,
+                    tz=pytz.timezone("US/Pacific"),
+                )
+                if (
+                    vehicle.trip.HasField("start_date")
+                    and vehicle.trip.HasField("start_time")
+                )
+                else None
+            ),
             schedule_relationship=TripScheduleRelationship(
                 vehicle.trip.schedule_relationship
             ),
             # Vehicle
             vehicle_id=vehicle.vehicle.id,
-            vehicle_label=vehicle.vehicle.label,
-            vehicle_license_plate=vehicle.vehicle.license_plate,
+            vehicle_label=(
+                vehicle.vehicle.label if vehicle.vehicle.HasField("label") else None
+            ),
+            vehicle_license_plate=(
+                vehicle.vehicle.license_plate
+                if vehicle.vehicle.HasField("license_plate")
+                else None
+            ),
             # Position
             latitude=vehicle.position.latitude,
             longitude=vehicle.position.longitude,
-            bearing=vehicle.position.bearing,
-            odometer=vehicle.position.odometer,
-            speed=vehicle.position.speed,
+            bearing=(
+                vehicle.position.bearing
+                if vehicle.position.HasField("bearing")
+                else None
+            ),
+            odometer=(
+                vehicle.position.odometer
+                if vehicle.position.HasField("odometer")
+                else None
+            ),
+            speed=(
+                vehicle.position.speed if vehicle.position.HasField("speed") else None
+            ),
             # ...
-            current_stop_sequence=vehicle.current_stop_sequence,
-            stop_id=vehicle.stop_id if vehicle.stop_id else None,
-            current_status=VehicleStopStatus(vehicle.current_status),
-            timestamp=datetime.datetime.fromtimestamp(
+            current_stop_sequence=(
+                vehicle.current_stop_sequence
+                if vehicle.HasField("current_stop_sequence")
+                else None
+            ),
+            stop_id=vehicle.stop_id if vehicle.HasField("stop_id") else None,
+            current_status=(
+                VehicleStopStatus(vehicle.current_status)
+                if vehicle.HasField("current_status")
+                else None
+            ),
+            timestamp=vehicle.timestamp,
+            timestamp_datetime=datetime.datetime.fromtimestamp(
                 vehicle.timestamp, tz=datetime.UTC
             ),
             congestion_level=(
                 VehicleCongestionLevel(vehicle.congestion_level)
-                if vehicle.congestion_level
+                if vehicle.HasField("congestion_level")
                 else None
             ),
             occupancy_status=(
                 VehicleOccupancyStatus(vehicle.occupancy_status)
-                if vehicle.occupancy_status
+                if vehicle.HasField("occupancy_status")
                 else None
             ),
-            occupancy_percentage=vehicle.occupancy_percentage,
+            occupancy_percentage=(
+                vehicle.occupancy_percentage
+                if vehicle.HasField("occupancy_percentage")
+                else None
+            ),
         )

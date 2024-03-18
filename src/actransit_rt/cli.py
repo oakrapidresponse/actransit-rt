@@ -134,8 +134,8 @@ def _filter_option() -> Callable:
     return click.option(
         "--filter",
         type=str,
-        callback=lambda ctx, param, value: dict(
-            [v.split(":") for v in value.split(",")]
+        callback=lambda ctx, param, value: (
+            dict([v.split(":") for v in value.split(",")]) if value else None
         ),
     )
 
